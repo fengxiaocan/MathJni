@@ -1,0 +1,62 @@
+//apply plugin: 'com.android.library'
+/*第一步修改为如下*/
+apply plugin: 'com.android.model.library'
+/*第二步在android外部包裹model*/
+model {
+    android {
+        /*第三步把赋值的添加 = */
+        compileSdkVersion = 25
+        buildToolsVersion = "26.0.0"
+        defaultConfig {
+            /*第四步在minSdkVersion 跟 targetSdkVersion后面添加apiLevel = */
+//            minSdkVersion 14
+//            targetSdkVersion 25
+            minSdkVersion.apiLevel = 9
+            targetSdkVersion.apiLevel = 25
+            versionCode = 1
+            versionName = "1.0"
+        }
+        buildTypes {
+            release {
+                minifyEnabled false
+                /*第五步修改如下 */
+//                proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                proguardFiles.add(file('proguard-android.txt'))
+            }
+        }
+        /*第六步添加jni名字 */
+        ndk {
+            moduleName "MathUtils"
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    testCompile 'junit:junit:4.12'
+}
+
+
+/*第八步,配置生成的*/
+
+def SDK_NAME = "MathUtil";
+def SDK_VERSION = "_V1.0";
+def sdkDestinationPath = "build";
+def zipFile = file('build/intermediates/bundles/release/classes.jar')
+
+task deleteBuild(type: Delete) {
+    delete sdkDestinationPath + SDK_NAME + SDK_VERSION + ".jar"
+}
+
+task makeJar(type: Jar) {
+    from zipTree(zipFile)
+    from fileTree(dir: 'src/main',includes: ['assets/**'])
+    baseName = SDK_NAME + SDK_VERSION
+    destinationDir = file(sdkDestinationPath)
+}
+
+makeJar.dependsOn(deleteBuild, build)
